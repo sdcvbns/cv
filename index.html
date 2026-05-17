@@ -3,173 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رادار الشبكة الحراري التكتيكي</title>
-    <!-- استدعاء الخطوط والمكتبات الخارجية الأساسية -->
+    <title>رادار تتبع الأشخاص التكتيكي</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <!-- مكتبة الخريطة الحرارية (Heatmap.js) ومكتبة الأيقونات -->
     <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- ربط ملف التنسيق الاحترافي الخارجي -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="dashboard-container">
-        <!-- الهيدر العلوي بنمط شاشات المراقبة -->
         <header class="main-header">
             <div class="header-title">
-                <h1><i class="fa-solid fa-satellite-dish pulse-icon"></i> نظام المراقبة الحراري للأجهزة المتصلة</h1>
-                <p>⚡ كشف حي ونشط للشبكة المحلية والترافيك اللحظي</p>
+                <h1><i class="fa-solid fa-user-radar pulse-icon" style="color: #00ff66;"></i> نظام رادار تتبع الأشخاص والمسارات الحي</h1>
+                <p>🛰️ مراقبة الإحداثيات الحية، خطوط السير، والنشاط الحراري للأفراد</p>
             </div>
             <div class="system-status">
                 <span class="status-indicator online"></span>
-                <span class="status-text">نظام المحاكاة: نشط</span>
+                <span class="status-text">رصد الأهداف: نشط</span>
             </div>
         </header>
 
-        <!-- المحتوى الأساسي للوحة التحكم -->
         <div class="main-content">
-            
-            <!-- اللوحة الجانبية: قائمة الأجهزة المكتشفة -->
+            <!-- اللوحة الجانبية: قائمة الأشخاص المراقبين -->
             <aside class="sidebar">
                 <div class="panel-header">
-                    <h2><i class="fa-solid fa-network-wired"></i> الأجهزة المكتشفة (<span id="device-count">0</span>)</h2>
+                    <h2><i class="fa-solid fa-users-viewfinder"></i> الأهداف النشطة (<span id="people-count">0</span>)</h2>
                 </div>
-                <div id="device-list" class="device-list-container">
-                    <!-- الأجهزة تُضاف هنا تلقائياً عبر الجافاسكريبت -->
+                <div id="people-list" class="device-list-container">
+                    <!-- كروت الأشخاص تولد هنا -->
                 </div>
             </aside>
 
-            <!-- منطقة الرادار والكاميرا الحرارية -->
+            <!-- منطقة الرادار والخريطة -->
             <main class="radar-panel">
                 <div class="panel-header flex-header">
-                    <h2><i class="fa-solid fa-eye text-danger"></i> شاشة العرض الحراري (Thermal View)</h2>
-                    <span class="scan-loader">جاري المسح...</span>
+                    <h2><i class="fa-solid fa-crosshairs text-danger"></i> شاشة الرصد الجغرافي والمسارات</h2>
+                    <span class="scan-loader">جاري تحديث الإحداثيات...</span>
                 </div>
                 <div class="radar-wrapper">
-                    <!-- حاوية الخريطة الحرارية -->
                     <div id="heatmap-area" class="heatmap-container">
-                        <!-- خط مسح الرادار المتأرجح -->
+                        <!-- مساحات رسم خطوط ومسارات السير -->
+                        <svg id="tracks-svg" class="tracks-layer"></svg>
+                        
+                        <!-- خط مسح الرادار -->
                         <div class="radar-sweep"></div>
-                        <!-- الأيقونات والعقد الشبكية ستتوزع هنا ديناميكياً -->
+                        
+                        <!-- نقاط الأشخاص (Nodes) سيتم حقنها هنا -->
                     </div>
                 </div>
             </main>
-
         </div>
     </div>
 
     <script>
-        // 1. إعداد وتكوين خريطة الحرارة (Heatmap.js)
+        // 1. إعداد خريطة الحرارة لتعطي توهجاً حول الشخص
         const heatmapInstance = h337.create({
             container: document.getElementById('heatmap-area'),
-            radius: 80,         // حجم التوهج الحراري حول كل جهاز
-            maxOpacity: 0.85,    // أعلى درجة وضوح للون الأحمر
-            minOpacity: 0,
-            blur: 0.8,          // درجة تداخل الألوان وتدرجها شيريه بالكاميرا الحرارية
-            gradient: {         // التدرج اللوني الحراري (أزرق خامل -> أصفر متوسط -> أحمر ساخن)
-                '.2': '#0000ff',
-                '.4': '#00ffff',
-                '.6': '#00ff00',
-                '.8': '#ffff00',
-                '.95': '#ff0000'
-            }
+            radius: 60,
+            maxOpacity: 0.7,
+            blur: 0.85,
+            gradient: { '.2': '#00ff66', '.5': '#ffff00', '.9': '#ff0000' }
         });
 
-        // 2. قائمة محاكاة الأجهزة (Mock Data) لكي يعمل على GitHub Pages مباشرة بدون سيرفر
-        const deviceTemplates = [
-            { name: "Sarmad's PC (الحاسوب الشخصي)", type: "desktop", ip: "192.168.1.15", mac: "E4:A4:71:B2:8C:11" },
-            { name: "iPhone 15 Pro", type: "mobile", ip: "192.168.1.22", mac: "BC:D1:D3:56:AA:02" },
-            { name: "Smart TV 4K (الشاشة الذكية)", type: "tv", ip: "192.168.1.50", mac: "A0:2B:B3:11:CC:94" },
-            { name: "PlayStation 5", type: "game", ip: "192.168.1.105", mac: "44:D7:12:88:EF:45" },
-            { name: "Router Gateway", type: "router", ip: "192.168.1.1", mac: "00:1A:2B:3C:4D:5E" },
-            { name: "Guest-Phone (جهاز زائر)", type: "mobile", ip: "192.168.1.120", mac: "88:75:56:29:4A:BC" }
+        // 2. بيانات الأشخاص (الموقع الحالي + سجل المسار السابق)
+        const peopleTargets = [
+            { id: "p1", name: "أحمد المندلاوي", role: "قائد المجموعة", icon: "fa-user-shield", x: 200, y: 150, history: [], status: "normal" },
+            { id: "p2", name: "سرمد (المشرف)", role: "مراقب النظام", icon: "fa-user-gear", x: 450, y: 280, history: [], status: "active" },
+            { id: "p3", name: "علي الجبوري", role: "فريق ميداني 1", icon: "fa-user-polyline", x: 600, y: 120, history: [], status: "normal" },
+            { id: "p4", name: "عمر الخالدي", role: "فريق ميداني 2", icon: "fa-user-ninja", x: 150, y: 380, history: [], status: "warning" },
+            { id: "p5", name: "مهندس الموقع", role: "فحص فني", icon: "fa-user-astronaut", x: 350, y: 420, history: [], status: "normal" }
         ];
 
-        // تعيين إحداثيات ثابتة وموزعة للأجهزة داخل الحاوية لمنع العشوائية المفرطة
-        const fixedPositions = [
-            { x: 150, y: 180 }, { x: 500, y: 120 }, { x: 320, y: 300 },
-            { x: 650, y: 400 }, { x: 400, y: 100 }, { x: 180, y: 420 }
-        ];
-
-        // 3. دالة تحديث وتوليد البيانات الحرارية والشبكية
-        function updateNetworkRadar() {
-            const listContainer = document.getElementById('device-list');
+        // دالة لتحديث حركة الأشخاص بشكل واقعي (عشوائي مدروس) ورسم مسار خلفهم
+        function simulateMovement() {
+            const listContainer = document.getElementById('people-list');
             const mapContainer = document.getElementById('heatmap-area');
+            const svgContainer = document.getElementById('tracks-svg');
             
-            // إزالة الأيقونات القديمة فقط (مع الحفاظ على خط المسح الـ Radar Sweep)
-            const oldIcons = mapContainer.querySelectorAll('.node-element');
-            oldIcons.forEach(el => el.remove());
+            // تنظيف العناصر القديمة
+            const oldNodes = mapContainer.querySelectorAll('.node-element');
+            oldNodes.forEach(el => el.remove());
             listContainer.innerHTML = '';
+            svgContainer.innerHTML = ''; // تنظيف خطوط المسار لرسمها مجدداً
 
             let thermalPoints = [];
-            document.getElementById('device-count').innerText = deviceTemplates.length;
+            document.getElementById('people-count').innerText = peopleTargets.length;
 
-            deviceTemplates.forEach((device, index) => {
-                // توليد نسبة استهلاك ترافيك عشوائية لحظية (تُمثل درجة الحرارة)
-                const trafficValue = Math.floor(Math.random() * 75) + 25; // بين 25% و 100%
-                const pos = fixedPositions[index];
+            peopleTargets.forEach((person) => {
+                // أ: حفظ الموقع الحالي في السجل (تاريخ المسار) قبل نقل الشخص للموقع الجديد
+                if (person.history.length === 0 || 
+                    person.history[person.history.length - 1].x !== person.x || 
+                    person.history[person.history.length - 1].y !== person.y) {
+                    
+                    person.history.push({ x: person.x, y: person.y });
+                    // الابقاء على آخر 6 نقاط فقط لعدم ملء الشاشة بالخطوط
+                    if(person.history.length > 6) person.history.shift();
+                }
 
-                // تجميع نقاط الحرارة لإرسالها للمكتبة
+                // ب: تحديث الإحداثيات (محاكاة مشي خطوة بخطوة)
+                const moveX = (Math.random() - 0.5) * 40; 
+                const moveY = (Math.random() - 0.5) * 40;
+                
+                person.x = Math.max(50, Math.min(mapContainer.clientWidth - 50, person.x + moveX));
+                person.y = Math.max(50, Math.min(mapContainer.clientHeight - 50, person.y + moveY));
+
+                // جـ: رسم خط المسار (Path) على طبقة الـ SVG
+                if(person.history.length > 1) {
+                    let pathPoints = person.history.map(pt => `${pt.x},${pt.y}`).join(' ');
+                    // إضافة الموقع الحالي اللحظي لنهاية الخط
+                    pathPoints += ` ${person.x},${person.y}`;
+
+                    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+                    polyline.setAttribute("points", pathPoints);
+                    polyline.setAttribute("class", `track-line line-${person.status}`);
+                    svgContainer.appendChild(polyline);
+                }
+
+                // د: إضافة النقاط الحرارية حول موقع الشخص الحالي
                 thermalPoints.push({
-                    x: pos.x,
-                    y: pos.y,
-                    value: trafficValue
+                    x: Math.floor(person.x),
+                    y: Math.floor(person.y),
+                    value: person.status === 'warning' ? 90 : 50
                 });
 
-                // تحديد أيقونة الجهاز المناسبة
-                let iconHtml = '<i class="fa-solid fa-laptop"></i>';
-                if(device.type === 'mobile') iconHtml = '<i class="fa-solid fa-mobile-screen-button"></i>';
-                if(device.type === 'tv') iconHtml = '<i class="fa-solid fa-tv"></i>';
-                if(device.type === 'game') iconHtml = '<i class="fa-solid fa-gamepad"></i>';
-                if(device.type === 'router') iconHtml = '<i class="fa-solid fa-network-wired"></i>';
-
-                // تعيين لون الحالة بناءً على الترافيك (حرارة الجهاز)
-                let statusColor = 'status-cool';
-                if(trafficValue > 50) statusColor = 'status-warm';
-                if(trafficValue > 80) statusColor = 'status-hot';
-
-                // أ. إضافة الجهاز للقائمة الجانبية المبرمجة بـ CSS الاحترافي
+                // هـ: بناء كرت الشخص في القائمة الجانبية
                 listContainer.innerHTML += `
-                    <div class="device-card ${statusColor}">
-                        <div class="card-icon">${iconHtml}</div>
+                    <div class="device-card person-card status-${person.status}">
+                        <div class="card-icon"><i class="fa-solid ${person.icon}"></i></div>
                         <div class="card-details">
-                            <h3>${device.name}</h3>
-                            <p class="font-mono">${device.ip} • <span class="text-muted">${device.mac}</span></p>
+                            <h3>${person.name}</h3>
+                            <p>${person.role}</p>
+                            <span class="coordinates-badge">X: ${Math.floor(person.x)} | Y: ${Math.floor(person.y)}</span>
                         </div>
-                        <div class="card-badge">${trafficValue}%</div>
                     </div>
                 `;
 
-                // ب. بناء العقدة والنبضة البصرية (Node Element) فوق خريطة الرادار الحراري
+                // و: إسقاط رمز الشخص على الخريطة ومؤشر النبض والـ Tooltip
                 const nodeElement = document.createElement('div');
-                nodeElement.className = `node-element ${statusColor}`;
-                nodeElement.style.left = `${pos.x}px`;
-                nodeElement.style.top = `${pos.y}px`;
+                nodeElement.className = `node-element target-person status-${person.status}`;
+                nodeElement.style.left = `${person.x}px`;
+                nodeElement.style.top = `${person.y}px`;
                 
                 nodeElement.innerHTML = `
                     <div class="node-pulse"></div>
-                    <div class="node-dot">${iconHtml}</div>
+                    <div class="node-dot"><i class="fa-solid ${person.icon}"></i></div>
                     <div class="node-tooltip">
-                        <strong>${device.name}</strong><br>
-                        IP: ${device.ip}<br>
-                        الاستهلاك الحالي: ${trafficValue}%
+                        <strong>${person.name}</strong><br>
+                        الوظيفة: ${person.role}<br>
+                        الإحداثيات: (${Math.floor(person.x)}, ${Math.floor(person.y)})
                     </div>
                 `;
                 mapContainer.appendChild(nodeElement);
             });
 
-            // تحديث خريطة الحرارة بكتلة البيانات الجديدة
+            // تحديث درجات التوهج الحراري للأشخاص
             heatmapInstance.setData({ max: 100, data: thermalPoints });
         }
 
-        // تشغيل التحديث الأول فوراً
-        updateNetworkRadar();
-
-        // إعادة تدوير الفحص وتحديث الحرارة والترافيك تلقائياً كل 4 ثوانٍ لمحاكاة الواقع اللحظي
-        setInterval(updateNetworkRadar, 4000);
+        // تشغيل الرصد وتحديث المواقع تلقائياً كل 3 ثوانٍ بشكل مستمر حت تلاحظ حركة الأشخاص ورسم المسار خلفهم
+        simulateMovement();
+        setInterval(simulateMovement, 3000);
     </script>
 </body>
 </html>
