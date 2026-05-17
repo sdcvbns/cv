@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رادار الشبكة الحراري التكتيكي</title>
+    <!-- استدعاء الخطوط والمكتبات الخارجية الأساسية -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- مكتبة الخريطة الحرارية (Heatmap.js) ومكتبة الأيقونات -->
+    <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ربط ملف التنسيق الاحترافي الخارجي -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- الهيدر العلوي بنمط شاشات المراقبة -->
+        <header class="main-header">
+            <div class="header-title">
+                <h1><i class="fa-solid fa-satellite-dish pulse-icon"></i> نظام المراقبة الحراري للأجهزة المتصلة</h1>
+                <p>⚡ كشف حي ونشط للشبكة المحلية والترافيك اللحظي</p>
+            </div>
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <span class="status-text">نظام المحاكاة: نشط</span>
+            </div>
+        </header>
+
+        <!-- المحتوى الأساسي للوحة التحكم -->
+        <div class="main-content">
+            
+            <!-- اللوحة الجانبية: قائمة الأجهزة المكتشفة -->
+            <aside class="sidebar">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-network-wired"></i> الأجهزة المكتشفة (<span id="device-count">0</span>)</h2>
+                </div>
+                <div id="device-list" class="device-list-container">
+                    <!-- الأجهزة تُضاف هنا تلقائياً عبر الجافاسكريبت -->
+                </div>
+            </aside>
+
+            <!-- منطقة الرادار والكاميرا الحرارية -->
+            <main class="radar-panel">
+                <div class="panel-header flex-header">
+                    <h2><i class="fa-solid fa-eye text-danger"></i> شاشة العرض الحراري (Thermal View)</h2>
+                    <span class="scan-loader">جاري المسح...</span>
+                </div>
+                <div class="radar-wrapper">
+                    <!-- حاوية الخريطة الحرارية -->
+                    <div id="heatmap-area" class="heatmap-container">
+                        <!-- خط مسح الرادار المتأرجح -->
+                        <div class="radar-sweep"></div>
+                        <!-- الأيقونات والعقد الشبكية ستتوزع هنا ديناميكياً -->
+                    </div>
+                </div>
+            </main>
+
+        </div>
+    </div>
+
+    <script>
+        // 1. إعداد وتكوين خريطة الحرارة (Heatmap.js)
+        const heatmapInstance = h337.create({
+            container: document.getElementById('heatmap-area'),
+            radius: 80,         // حجم التوهج الحراري حول كل جهاز
+            maxOpacity: 0.85,    // أعلى درجة وضوح للون الأحمر
+            minOpacity: 0,
+            blur: 0.8,          // درجة تداخل الألوان وتدرجها شيريه بالكاميرا الحرارية
+            gradient: {         // التدرج اللوني الحراري (أزرق خامل -> أصفر متوسط -> أحمر ساخن)
+                '.2': '#0000ff',
+                '.4': '#00ffff',
+                '.6': '#00ff00',
+                '.8': '#ffff00',
+                '.95': '#ff0000'
+            }
+        });
+
+        // 2. قائمة محاكاة الأجهزة (Mock Data) لكي يعمل على GitHub Pages مباشرة بدون سيرفر
+        const deviceTemplates = [
+            { name: "Sarmad's PC (الحاسوب الشخصي)", type: "desktop", ip: "192.168.1.15", mac: "E4:A4:71:B2:8C:11" },
+            { name: "iPhone 15 Pro", type: "mobile", ip: "192.168.1.22", mac: "BC:D1:D3:56:AA:02" },
+            { name: "Smart TV 4K (الشاشة الذكية)", type: "tv", ip: "192.168.1.50", mac: "A0:2B:B3:11:CC:94" },
+            { name: "PlayStation 5", type: "game", ip: "192.168.1.105", mac: "44:D7:12:88:EF:45" },
+            { name: "Router Gateway", type: "router", ip: "192.168.1.1", mac: "00:1A:2B:3C:4D:5E" },
+            { name: "Guest-Phone (جهاز زائر)", type: "mobile", ip: "192.168.1.120", mac: "88:75:56:29:4A:BC" }
+        ];
+
+        // تعيين إحداثيات ثابتة وموزعة للأجهزة داخل الحاوية لمنع العشوائية المفرطة
+        const fixedPositions = [
+            { x: 150, y: 180 }, { x: 500, y: 120 }, { x: 320, y: 300 },
+            { x: 650, y: 400 }, { x: 400, y: 100 }, { x: 180, y: 420 }
+        ];
+
+        // 3. دالة تحديث وتوليد البيانات الحرارية والشبكية
+        function updateNetworkRadar() {
+            const listContainer = document.getElementById('device-list');
+            const mapContainer = document.getElementById('heatmap-area');
+            
+            // إزالة الأيقونات القديمة فقط (مع الحفاظ على خط المسح الـ Radar Sweep)
+            const oldIcons = mapContainer.querySelectorAll('.node-element');
+            oldIcons.forEach(el => el.remove());
+            listContainer.innerHTML = '';
+
+            let thermalPoints = [];
+            document.getElementById('device-count').innerText = deviceTemplates.length;
+
+            deviceTemplates.forEach((device, index) => {
+                // توليد نسبة استهلاك ترافيك عشوائية لحظية (تُمثل درجة الحرارة)
+                const trafficValue = Math.floor(Math.random() * 75) + 25; // بين 25% و 100%
+                const pos = fixedPositions[index];
+
+                // تجميع نقاط الحرارة لإرسالها للمكتبة
+                thermalPoints.push({
+                    x: pos.x,
+                    y: pos.y,
+                    value: trafficValue
+                });
+
+                // تحديد أيقونة الجهاز المناسبة
+                let iconHtml = '<i class="fa-solid fa-laptop"></i>';
+                if(device.type === 'mobile') iconHtml = '<i class="fa-solid fa-mobile-screen-button"></i>';
+                if(device.type === 'tv') iconHtml = '<i class="fa-solid fa-tv"></i>';
+                if(device.type === 'game') iconHtml = '<i class="fa-solid fa-gamepad"></i>';
+                if(device.type === 'router') iconHtml = '<i class="fa-solid fa-network-wired"></i>';
+
+                // تعيين لون الحالة بناءً على الترافيك (حرارة الجهاز)
+                let statusColor = 'status-cool';
+                if(trafficValue > 50) statusColor = 'status-warm';
+                if(trafficValue > 80) statusColor = 'status-hot';
+
+                // أ. إضافة الجهاز للقائمة الجانبية المبرمجة بـ CSS الاحترافي
+                listContainer.innerHTML += `
+                    <div class="device-card ${statusColor}">
+                        <div class="card-icon">${iconHtml}</div>
+                        <div class="card-details">
+                            <h3>${device.name}</h3>
+                            <p class="font-mono">${device.ip} • <span class="text-muted">${device.mac}</span></p>
+                        </div>
+                        <div class="card-badge">${trafficValue}%</div>
+                    </div>
+                `;
+
+                // ب. بناء العقدة والنبضة البصرية (Node Element) فوق خريطة الرادار الحراري
+                const nodeElement = document.createElement('div');
+                nodeElement.className = `node-element ${statusColor}`;
+                nodeElement.style.left = `${pos.x}px`;
+                nodeElement.style.top = `${pos.y}px`;
+                
+                nodeElement.innerHTML = `
+                    <div class="node-pulse"></div>
+                    <div class="node-dot">${iconHtml}</div>
+                    <div class="node-tooltip">
+                        <strong>${device.name}</strong><br>
+                        IP: ${device.ip}<br>
+                        الاستهلاك الحالي: ${trafficValue}%
+                    </div>
+                `;
+                mapContainer.appendChild(nodeElement);
+            });
+
+            // تحديث خريطة الحرارة بكتلة البيانات الجديدة
+            heatmapInstance.setData({ max: 100, data: thermalPoints });
+        }
+
+        // تشغيل التحديث الأول فوراً
+        updateNetworkRadar();
+
+        // إعادة تدوير الفحص وتحديث الحرارة والترافيك تلقائياً كل 4 ثوانٍ لمحاكاة الواقع اللحظي
+        setInterval(updateNetworkRadar, 4000);
+    </script>
+</body>
+</html>
