@@ -2,169 +2,931 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رادار تتبع الأشخاص التكتيكي</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام إدارة قطع غيار الهواتف</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #e0e7ff;
+            --bg-color: #f3f4f6;
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --border: #c7d2fe;
+            --radius: 16px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        input {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding-bottom: 90px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 24px 16px;
+            text-align: center;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
+        }
+
+        header h1 { font-size: 1.4rem; font-weight: 800; }
+        header p { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
+
+        .container {
+            flex: 1;
+            padding: 20px 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 8px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+            border-top: 1px solid var(--border);
+            z-index: 1000;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+
+        .nav-bar.keyboard-open {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(100%);
+            pointer-events: none;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 12px;
+            transition: var(--transition);
+        }
+
+        .nav-item.active { color: var(--primary); background: var(--primary-light); }
+
+        .nav-icon-img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+        }
+
+        .card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85rem; }
+        
+        input {
+            width: 100%; 
+            padding: 12px 16px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 12px; 
+            font-size: 0.95rem; 
+            outline: none; 
+            background: #fafafa;
+            color: var(--text-main);
+        }
+
+        input:focus { 
+            border-color: var(--primary); 
+            background-color: var(--surface);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .custom-select-wrapper {
+            position: relative;
+            user-select: none;
+        }
+
+        .custom-select-trigger {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            background: #ffffff;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(79, 70, 229, 0.05);
+            transition: var(--transition);
+        }
+
+        .custom-select-trigger::after {
+            content: '';
+            width: 0; 
+            height: 0; 
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 7px solid var(--primary);
+            transition: transform 0.2s ease;
+        }
+
+        .custom-select-wrapper.open .custom-select-trigger::after {
+            transform: rotate(180deg);
+        }
+
+        .custom-select-wrapper.open .custom-select-trigger {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+        }
+
+        .custom-options {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            display: none;
+            z-index: 99;
+            overflow: hidden;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-select-wrapper.open .custom-options {
+            display: block;
+        }
+
+        .custom-option {
+            padding: 14px 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.15s ease;
+        }
+
+        .custom-option:last-child { border-bottom: none; }
+
+        .custom-option:hover, .custom-option.selected {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .custom-option.selected::after {
+            content: '✓';
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .file-upload-wrapper {
+            border: 2px dashed var(--border);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .file-upload-wrapper:hover { border-color: var(--primary); background: var(--primary-light); }
+
+        .btn {
+            background-color: var(--primary); color: white; border: none;
+            padding: 14px; width: 100%; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn:active { transform: scale(0.98); }
+
+        .btn-sm { padding: 10px 14px; width: auto; font-size: 0.85rem; border-radius: 10px; }
+        .flex-row { display: flex; gap: 10px; align-items: center; }
+
+        .item-card {
+            background: var(--surface); padding: 16px; border-radius: 14px;
+            margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            gap: 12px;
+        }
+        .item-img {
+            width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 1.5px solid var(--border); background: #f8fafc; flex-shrink: 0; cursor: pointer;
+            transition: var(--transition);
+        }
+        .item-img:active { transform: scale(0.95); }
+        
+        .item-details { flex: 1; min-width: 0; }
+        .item-details h4 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-details p { font-size: 0.82rem; color: var(--text-muted); }
+        .item-actions { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 10px; border-radius: 12px; flex-shrink: 0; }
+
+        .qty-btn {
+            width: 32px; height: 32px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid var(--border);
+        }
+        .qty-btn.plus { color: var(--success); background: var(--success-light); }
+        .qty-btn.minus { color: var(--danger); background: var(--danger-light); }
+
+        .stats-box {
+            background: linear-gradient(135deg, #4f46e5, #3730a3);
+            color: white; padding: 20px; border-radius: var(--radius); margin-bottom: 14px;
+        }
+        .stats-box h3 { font-size: 1.3rem; font-weight: 800; margin-top: 6px; }
+        .stats-box .amount { font-size: 1.1rem; font-weight: 700; opacity: 0.95; margin-top: 2px; color: #fde047; }
+        .stats-list { font-size: 0.82rem; margin-top: 12px; background: rgba(255, 255, 255, 0.12); padding: 10px; border-radius: 10px; max-height: 120px; overflow-y: auto; }
+
+        .custom-dialog-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 3000; padding: 16px;
+        }
+        .custom-dialog-card {
+            background: var(--surface); padding: 24px; border-radius: 20px; width: 100%; max-width: 320px;
+            text-align: center; box-shadow: var(--shadow);
+        }
+        .custom-dialog-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+        .custom-dialog-msg { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+        .custom-dialog-input {
+            width: 100%; padding: 12px 16px; border: 1.5px solid var(--border);
+            border-radius: 12px; font-size: 0.95rem; outline: none; background: #fafafa;
+            color: var(--text-main); margin-bottom: 20px;
+        }
+        .custom-dialog-buttons { display: flex; gap: 10px; }
+        .custom-dialog-btn {
+            flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+        }
+        .custom-dialog-btn.primary { background-color: var(--primary); color: white; }
+        .custom-dialog-btn.secondary { background-color: #e2e8f0; color: #475569; }
+
+        /* نافذة تكبير الصورة */
+        .image-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px);
+            display: none; justify-content: center; align-items: center; z-index: 4000; padding: 20px;
+        }
+        .image-modal-card {
+            background: var(--surface); padding: 20px; border-radius: 20px; width: 100%; max-width: 380px;
+            text-align: center; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center;
+        }
+        .zoomed-img {
+            width: 100%; max-height: 350px; object-fit: contain; border-radius: 12px; border: 1.5px solid var(--border); margin-bottom: 16px; background: #000;
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 2000; padding: 16px;
+        }
+        .modal-card { background: var(--surface); padding: 24px; border-radius: 20px; width: 100%; max-width: 340px; text-align: center; box-shadow: var(--shadow); }
+        .modal-btn { display: block; width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        .btn-sell { background-color: var(--success); color: white; }
+        .btn-loss { background-color: var(--warning); color: #78350f; }
+        .btn-defect { background-color: var(--danger); color: white; }
+        .btn-cancel { background-color: #e2e8f0; color: #475569; }
+    </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-    <div class="dashboard-container">
-        <header class="main-header">
-            <div class="header-title">
-                <h1><i class="fa-solid fa-user-radar pulse-icon" style="color: #00ff66;"></i> نظام رادار تتبع الأشخاص والمسارات الحي</h1>
-                <p>🛰️ مراقبة الإحداثيات الحية، خطوط السير، والنشاط الحراري للأفراد</p>
-            </div>
-            <div class="system-status">
-                <span class="status-indicator online"></span>
-                <span class="status-text">رصد الأهداف: نشط</span>
-            </div>
-        </header>
+    <header>
+        <h1>الآغا برو</h1>
+        <p>مخزن قطع الغيار</p>
+    </header>
 
-        <div class="main-content">
-            <!-- اللوحة الجانبية: قائمة الأشخاص المراقبين -->
-            <aside class="sidebar">
-                <div class="panel-header">
-                    <h2><i class="fa-solid fa-users-viewfinder"></i> الأهداف النشطة (<span id="people-count">0</span>)</h2>
-                </div>
-                <div id="people-list" class="device-list-container">
-                    <!-- كروت الأشخاص تولد هنا -->
-                </div>
-            </aside>
-
-            <!-- منطقة الرادار والخريطة -->
-            <main class="radar-panel">
-                <div class="panel-header flex-header">
-                    <h2><i class="fa-solid fa-crosshairs text-danger"></i> شاشة الرصد الجغرافي والمسارات</h2>
-                    <span class="scan-loader">جاري تحديث الإحداثيات...</span>
-                </div>
-                <div class="radar-wrapper">
-                    <div id="heatmap-area" class="heatmap-container">
-                        <!-- مساحات رسم خطوط ومسارات السير -->
-                        <svg id="tracks-svg" class="tracks-layer"></svg>
-                        
-                        <!-- خط مسح الرادار -->
-                        <div class="radar-sweep"></div>
-                        
-                        <!-- نقاط الأشخاص (Nodes) سيتم حقنها هنا -->
+    <div class="container">
+        <div id="tab-add" class="tab-content active">
+            <div class="card">
+                <h3>إضافة قطعة غيار جديدة</h3>
+                <div class="form-group">
+                    <label>اختر القسم</label>
+                    <div class="flex-row">
+                        <div class="custom-select-wrapper" id="customSelectWrapper" style="flex: 1;">
+                            <div class="custom-select-trigger" id="customSelectTrigger">اختر القسم</div>
+                            <div class="custom-options" id="customOptionsContainer"></div>
+                        </div>
+                        <input type="hidden" id="partCategory" value="">
+                        <button class="btn btn-sm" onclick="promptAddCategory()">+ قسم جديد</button>
                     </div>
                 </div>
-            </main>
+                <div class="form-group">
+                    <label>اسم القطعة ورقم الجهاز</label>
+                    <input type="text" id="partName" placeholder="مثال: فلاتة شحن A50">
+                </div>
+                <div class="form-group">
+                    <label>سعر الجملة (د.ع)</label>
+                    <input type="number" id="partPrice" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>الكمية الأولية</label>
+                    <input type="number" id="partQty" value="1" placeholder="1">
+                </div>
+                <div class="form-group">
+                    <label>صورة القطعة (اختياري)</label>
+                    <div class="file-upload-wrapper" onclick="document.getElementById('partImageFile').click()">
+                        <span id="imageLabelText" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">اضغط لاختيار صورة أو التقاطها</span>
+                        <input type="file" id="partImageFile" accept="image/*" style="display: none;" onchange="handleImagePreview(this)">
+                    </div>
+                </div>
+                <button class="btn" onclick="addPartToInventory()">إضافة إلى المخزن</button>
+            </div>
+        </div>
+
+        <div id="tab-search" class="tab-content">
+            <div class="card" style="padding: 14px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <input type="text" id="searchInput" placeholder="🔍 بحث ذكي (ابحث بالاسم أو القسم...)" oninput="filterInventory()">
+                </div>
+            </div>
+            <div id="searchResults">
+                <p style="text-align: center; color: var(--text-muted); margin-top: 40px; font-size: 0.9rem;">اكتب اسم القطعة للبحث عنها</p>
+            </div>
+        </div>
+
+        <div id="tab-stats" class="tab-content">
+            <div class="stats-box">
+                <p>إجمالي عدد القطع بالمخزن</p>
+                <h3 id="totalQtyStat">0 قطعة</h3>
+            </div>
+            <div class="stats-box" style="background: linear-gradient(135deg, #059669, #047857);">
+                <p>إجمالي رأس المال (تكلفة البضاعة)</p>
+                <h3 id="totalCapitalStat">0 د.ع</h3>
+            </div>
+            <div class="stats-box" style="background: linear-gradient(135deg, #0284c7, #0369a1);">
+                <p>المبيعات الإجمالية</p>
+                <h3 id="totalSalesStat">0 قطعة</h3>
+                <div class="amount" id="totalSalesAmount">المبلغ: 0 د.ع</div>
+                <div class="stats-list" id="salesListContainer">لا توجد مبيعات مسجلة</div>
+            </div>
+            <div class="stats-box" style="background: linear-gradient(135deg, #d97706, #b45309);">
+                <p>الخسائر</p>
+                <h3 id="totalLossStat">0 قطعة</h3>
+                <div class="amount" id="totalLossAmount">المبلغ: 0 د.ع</div>
+                <div class="stats-list" id="lossListContainer">لا توجد خسائر مسجلة</div>
+            </div>
+            <div class="stats-box" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+                <p>القطع التالفة</p>
+                <h3 id="totalDefectStat">0 قطعة</h3>
+                <div class="amount" id="totalDefectAmount">المبلغ: 0 د.ع</div>
+                <div class="stats-list" id="defectListContainer">لا توجد قطع تالفة مسجلة</div>
+            </div>
+            <button class="btn" style="background-color: var(--danger); margin-top: 10px;" onclick="confirmClearAll()">مسح جميع السجلات والإحصائيات</button>
         </div>
     </div>
 
+    <!-- نافذة تكبير الصورة -->
+    <div class="image-modal-overlay" id="imageModal" onclick="closeImageModal()">
+        <div class="image-modal-card" onclick="event.stopPropagation()">
+            <h3 id="modalImageTitle" style="font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;"></h3>
+            <img id="modalZoomedImg" class="zoomed-img" src="" alt="صورة مكبرة">
+            <button class="btn" onclick="closeImageModal()">إخفاء</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="actionModal">
+        <div class="modal-card">
+            <h3>اختر نوع العملية</h3>
+            <p id="modalItemName" style="font-weight: 700; color: var(--primary); margin-bottom: 18px;"></p>
+            <button class="modal-btn btn-sell" onclick="processAction('sale')">بيع</button>
+            <button class="modal-btn btn-loss" onclick="processAction('loss')">خسارة</button>
+            <button class="modal-btn btn-defect" onclick="processAction('defect')">خلل في القطعة</button>
+            <button class="modal-btn btn-cancel" onclick="closeModal()">إلغاء</button>
+        </div>
+    </div>
+
+    <div class="custom-dialog-overlay" id="customDialog">
+        <div class="custom-dialog-card">
+            <h3 class="custom-dialog-title" id="dialogTitle">تنبيه</h3>
+            <p class="custom-dialog-msg" id="dialogMsg"></p>
+            <div id="dialogInputContainer"></div>
+            <div class="custom-dialog-buttons" id="dialogButtons" style="margin-top: 15px;">
+                <button class="custom-dialog-btn primary" id="dialogOkBtn">موافق</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-bar" id="navBar">
+        <button class="nav-item active" onclick="switchTab('add', this)">
+            <img src="ضع_رابط_أيقونة_الإضافة_هنا" class="nav-icon-img" alt="إضافة" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+            <span style="display:none;">📦</span>
+            <span>إضافة</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('search', this)">
+            <img src="ضع_رابط_أيقونة_البحث_هنا" class="nav-icon-img" alt="بحث" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+            <span style="display:none;">🔍</span>
+            <span>البحث والبيع</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('stats', this)">
+            <img src="ضع_رابط_أيقونة_الإحصائيات_هنا" class="nav-icon-img" alt="إحصائيات" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+            <span style="display:none;">📊</span>
+            <span>الإحصائيات</span>
+        </button>
+    </div>
+
     <script>
-        // 1. إعداد خريطة الحرارة لتعطي توهجاً حول الشخص
-        const heatmapInstance = h337.create({
-            container: document.getElementById('heatmap-area'),
-            radius: 60,
-            maxOpacity: 0.7,
-            blur: 0.85,
-            gradient: { '.2': '#00ff66', '.5': '#ffff00', '.9': '#ff0000' }
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw4y7N54aiNAOHuffs3Ny0Ovk_4CcnGzNXzMtzCL-UPxGvtXYyuPLPXjNHZvuJ8ymFGzA/exec";
+
+        let categories = ['شاشات', 'فلاتات', 'قواعد شحن', 'بطاريات', 'كاميرات'];
+        let inventory = [];
+        let salesLog = [];
+        let lossLog = [];
+        let defectLog = [];
+        let selectedItemId = null;
+        let base64ImageTemp = "";
+
+        window.onload = function() {
+            fetchDataFromServer();
+            setupCustomSelect();
+        };
+
+        function setupCustomSelect() {
+            const wrapper = document.getElementById('customSelectWrapper');
+            const trigger = document.getElementById('customSelectTrigger');
+            
+            trigger.onclick = function(e) {
+                e.stopPropagation();
+                wrapper.classList.toggle('open');
+            };
+
+            document.addEventListener('click', function(e) {
+                if (!wrapper.contains(e.target)) {
+                    wrapper.classList.remove('open');
+                }
+            });
+        }
+
+        function updateCategoryDropdown() {
+            const container = document.getElementById('customOptionsContainer');
+            const hiddenInput = document.getElementById('partCategory');
+            const trigger = document.getElementById('customSelectTrigger');
+            if(!container) return;
+
+            container.innerHTML = '';
+            const uniqueCategories = Array.from(new Set(categories));
+
+            let currentVal = hiddenInput.value;
+            if (!uniqueCategories.includes(currentVal) && uniqueCategories.length > 0) {
+                currentVal = uniqueCategories[0];
+            }
+            hiddenInput.value = currentVal;
+            trigger.textContent = currentVal || "اختر القسم";
+
+            uniqueCategories.forEach(cat => {
+                let opt = document.createElement('div');
+                opt.className = 'custom-option' + (cat === currentVal ? ' selected' : '');
+                opt.textContent = cat;
+                opt.onclick = function() {
+                    hiddenInput.value = cat;
+                    trigger.textContent = cat;
+                    document.getElementById('customSelectWrapper').classList.remove('open');
+                    updateCategoryDropdown();
+                };
+                container.appendChild(opt);
+            });
+        }
+
+        function handleImagePreview(input) {
+            if (input.files && input.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        let canvas = document.createElement('canvas');
+                        let MAX_WIDTH = 300;
+                        let MAX_HEIGHT = 300;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        let ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        base64ImageTemp = canvas.toDataURL('image/jpeg', 0.7);
+                        document.getElementById('imageLabelText').textContent = "✅ تم اختيار وضغط الصورة بنجاح";
+                        document.getElementById('imageLabelText').style.color = "var(--success)";
+                    }
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function openImageModal(imgSrc, title) {
+            document.getElementById('modalZoomedImg').src = imgSrc;
+            document.getElementById('modalImageTitle').textContent = title;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        function showCustomAlert(message, title = "تنبيه") {
+            return new Promise((resolve) => {
+                document.getElementById('dialogTitle').textContent = title;
+                document.getElementById('dialogMsg').textContent = message;
+                document.getElementById('dialogInputContainer').innerHTML = '';
+                const btnContainer = document.getElementById('dialogButtons');
+                btnContainer.innerHTML = `<button class="custom-dialog-btn primary" id="dialogOkBtn">موافق</button>`;
+                document.getElementById('customDialog').style.display = 'flex';
+                document.getElementById('dialogOkBtn').onclick = function() {
+                    document.getElementById('customDialog').style.display = 'none';
+                    resolve(true);
+                };
+            });
+        }
+
+        function showCustomConfirm(message, title = "تأكيد") {
+            return new Promise((resolve) => {
+                document.getElementById('dialogTitle').textContent = title;
+                document.getElementById('dialogMsg').textContent = message;
+                document.getElementById('dialogInputContainer').innerHTML = '';
+                const btnContainer = document.getElementById('dialogButtons');
+                btnContainer.innerHTML = `
+                    <button class="custom-dialog-btn secondary" id="dialogCancelBtn">إلغاء</button>
+                    <button class="custom-dialog-btn primary" id="dialogOkBtn">موافق</button>
+                `;
+                document.getElementById('customDialog').style.display = 'flex';
+                document.getElementById('dialogOkBtn').onclick = function() {
+                    document.getElementById('customDialog').style.display = 'none';
+                    resolve(true);
+                };
+                document.getElementById('dialogCancelBtn').onclick = function() {
+                    document.getElementById('customDialog').style.display = 'none';
+                    resolve(false);
+                };
+            });
+        }
+
+        function showCustomPrompt(message, title = "إدخال بيانات") {
+            return new Promise((resolve) => {
+                document.getElementById('dialogTitle').textContent = title;
+                document.getElementById('dialogMsg').textContent = message;
+                document.getElementById('dialogInputContainer').innerHTML = `<input type="text" id="customPromptInput" class="custom-dialog-input" placeholder="اكتب هنا..." autofocus>`;
+                const btnContainer = document.getElementById('dialogButtons');
+                btnContainer.innerHTML = `
+                    <button class="custom-dialog-btn secondary" id="dialogCancelBtn">إلغاء</button>
+                    <button class="custom-dialog-btn primary" id="dialogOkBtn">موافق</button>
+                `;
+                document.getElementById('customDialog').style.display = 'flex';
+                const inputField = document.getElementById('customPromptInput');
+                setTimeout(() => inputField.focus(), 50);
+
+                document.getElementById('dialogOkBtn').onclick = function() {
+                    let val = inputField.value;
+                    document.getElementById('customDialog').style.display = 'none';
+                    resolve(val);
+                };
+                document.getElementById('dialogCancelBtn').onclick = function() {
+                    document.getElementById('customDialog').style.display = 'none';
+                    resolve(null);
+                };
+            });
+        }
+
+        function fetchDataFromServer() {
+            fetch(WEB_APP_URL + "?action=getData")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.inventory) {
+                        inventory = (data.inventory || []).map(item => ({
+                            ...item,
+                            id: String(item.id),
+                            price: Number(item.price) || 0,
+                            qty: Number(item.qty) || 0,
+                            image: item.image || ""
+                        }));
+                    }
+                    if (data.salesLog) {
+                        salesLog = (data.salesLog || []).map(i => ({
+                            name: i.name,
+                            qty: Number(i.qty) || 0,
+                            totalPrice: Number(i.totalPrice) || 0
+                        }));
+                    }
+                    if (data.lossLog) {
+                        lossLog = (data.lossLog || []).map(i => ({
+                            name: i.name,
+                            qty: Number(i.qty) || 0,
+                            totalPrice: Number(i.totalPrice) || 0
+                        }));
+                    }
+                    if (data.defectLog) {
+                        defectLog = (data.defectLog || []).map(i => ({
+                            name: i.name,
+                            qty: Number(i.qty) || 0,
+                            totalPrice: Number(i.totalPrice) || 0
+                        }));
+                    }
+                    if (data.categories && data.categories.length > 0) {
+                        categories = Array.from(new Set(data.categories.map(c => String(c).trim()).filter(Boolean)));
+                    }
+                    updateCategoryDropdown();
+                    filterInventory();
+                    updateStats();
+                })
+                .catch(err => {});
+        }
+
+        function syncToServer() {
+            const payload = {
+                inventory: inventory,
+                salesLog: salesLog,
+                lossLog: lossLog,
+                defectLog: defectLog,
+                categories: categories
+            };
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {})
+            .catch(err => {});
+        }
+
+        const navBar = document.getElementById('navBar');
+        document.querySelectorAll('input').forEach(element => {
+            element.addEventListener('focus', () => navBar.classList.add('keyboard-open'));
+            element.addEventListener('blur', () => {
+                setTimeout(() => {
+                    if (!document.activeElement.matches('input')) {
+                        navBar.classList.remove('keyboard-open');
+                    }
+                }, 150);
+            });
         });
 
-        // 2. بيانات الأشخاص (الموقع الحالي + سجل المسار السابق)
-        const peopleTargets = [
-            { id: "p1", name: "أحمد المندلاوي", role: "قائد المجموعة", icon: "fa-user-shield", x: 200, y: 150, history: [], status: "normal" },
-            { id: "p2", name: "سرمد (المشرف)", role: "مراقب النظام", icon: "fa-user-gear", x: 450, y: 280, history: [], status: "active" },
-            { id: "p3", name: "علي الجبوري", role: "فريق ميداني 1", icon: "fa-user-polyline", x: 600, y: 120, history: [], status: "normal" },
-            { id: "p4", name: "عمر الخالدي", role: "فريق ميداني 2", icon: "fa-user-ninja", x: 150, y: 380, history: [], status: "warning" },
-            { id: "p5", name: "مهندس الموقع", role: "فحص فني", icon: "fa-user-astronaut", x: 350, y: 420, history: [], status: "normal" }
-        ];
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            element.classList.add('active');
+            if (tabId === 'stats') updateStats();
+        }
 
-        // دالة لتحديث حركة الأشخاص بشكل واقعي (عشوائي مدروس) ورسم مسار خلفهم
-        function simulateMovement() {
-            const listContainer = document.getElementById('people-list');
-            const mapContainer = document.getElementById('heatmap-area');
-            const svgContainer = document.getElementById('tracks-svg');
+        async function promptAddCategory() {
+            let newCat = await showCustomPrompt("أدخل اسم القسم الجديد:", "إضافة قسم جديد");
+            if (newCat && newCat.trim() !== "") {
+                let trimmedCat = newCat.trim();
+                if (!categories.includes(trimmedCat)) {
+                    categories.push(trimmedCat);
+                    document.getElementById('partCategory').value = trimmedCat;
+                    updateCategoryDropdown();
+                    syncToServer();
+                } else {
+                    await showCustomAlert("هذا القسم موجود مسبقاً!");
+                }
+            }
+        }
+
+        async function addPartToInventory() {
+            let category = document.getElementById('partCategory').value;
+            let name = document.getElementById('partName').value.trim();
+            let price = parseFloat(document.getElementById('partPrice').value) || 0;
+            let qty = parseInt(document.getElementById('partQty').value) || 1;
+
+            if (!name) { 
+                await showCustomAlert("يرجى إدخال اسم القطعة"); 
+                return; 
+            }
+
+            let newPart = {
+                id: Date.now().toString(),
+                category: category,
+                name: name,
+                price: price,
+                qty: qty,
+                image: base64ImageTemp
+            };
+
+            inventory.push(newPart);
+            syncToServer();
+            filterInventory();
+
+            document.getElementById('partName').value = '';
+            document.getElementById('partPrice').value = '';
+            document.getElementById('partQty').value = '1';
+            document.getElementById('partImageFile').value = '';
+            base64ImageTemp = "";
+            document.getElementById('imageLabelText').textContent = "اضغط لاختيار صورة أو التقاطها";
+            document.getElementById('imageLabelText').style.color = "var(--text-muted)";
             
-            // تنظيف العناصر القديمة
-            const oldNodes = mapContainer.querySelectorAll('.node-element');
-            oldNodes.forEach(el => el.remove());
-            listContainer.innerHTML = '';
-            svgContainer.innerHTML = ''; // تنظيف خطوط المسار لرسمها مجدداً
+            await showCustomAlert("تمت الإضافة والحفظ بنجاح!");
+        }
 
-            let thermalPoints = [];
-            document.getElementById('people-count').innerText = peopleTargets.length;
+        function filterInventory() {
+            let query = document.getElementById('searchInput').value.trim().toLowerCase();
+            let resultsContainer = document.getElementById('searchResults');
 
-            peopleTargets.forEach((person) => {
-                // أ: حفظ الموقع الحالي في السجل (تاريخ المسار) قبل نقل الشخص للموقع الجديد
-                if (person.history.length === 0 || 
-                    person.history[person.history.length - 1].x !== person.x || 
-                    person.history[person.history.length - 1].y !== person.y) {
-                    
-                    person.history.push({ x: person.x, y: person.y });
-                    // الابقاء على آخر 6 نقاط فقط لعدم ملء الشاشة بالخطوط
-                    if(person.history.length > 6) person.history.shift();
-                }
+            if (query === "") {
+                resultsContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin-top: 40px; font-size: 0.9rem;">اكتب اسم القطعة للبحث عنها</p>';
+                return;
+            }
 
-                // ب: تحديث الإحداثيات (محاكاة مشي خطوة بخطوة)
-                const moveX = (Math.random() - 0.5) * 40; 
-                const moveY = (Math.random() - 0.5) * 40;
-                
-                person.x = Math.max(50, Math.min(mapContainer.clientWidth - 50, person.x + moveX));
-                person.y = Math.max(50, Math.min(mapContainer.clientHeight - 50, person.y + moveY));
+            let filtered = inventory.filter(item => 
+                String(item.name).toLowerCase().includes(query) || String(item.category).toLowerCase().includes(query)
+            );
 
-                // جـ: رسم خط المسار (Path) على طبقة الـ SVG
-                if(person.history.length > 1) {
-                    let pathPoints = person.history.map(pt => `${pt.x},${pt.y}`).join(' ');
-                    // إضافة الموقع الحالي اللحظي لنهاية الخط
-                    pathPoints += ` ${person.x},${person.y}`;
+            if (filtered.length === 0) {
+                resultsContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin-top: 40px; font-size: 0.9rem;">لا توجد نتائج مطابقة لبحثك</p>';
+                return;
+            }
 
-                    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-                    polyline.setAttribute("points", pathPoints);
-                    polyline.setAttribute("class", `track-line line-${person.status}`);
-                    svgContainer.appendChild(polyline);
-                }
-
-                // د: إضافة النقاط الحرارية حول موقع الشخص الحالي
-                thermalPoints.push({
-                    x: Math.floor(person.x),
-                    y: Math.floor(person.y),
-                    value: person.status === 'warning' ? 90 : 50
-                });
-
-                // هـ: بناء كرت الشخص في القائمة الجانبية
-                listContainer.innerHTML += `
-                    <div class="device-card person-card status-${person.status}">
-                        <div class="card-icon"><i class="fa-solid ${person.icon}"></i></div>
-                        <div class="card-details">
-                            <h3>${person.name}</h3>
-                            <p>${person.role}</p>
-                            <span class="coordinates-badge">X: ${Math.floor(person.x)} | Y: ${Math.floor(person.y)}</span>
+            let html = '';
+            filtered.forEach(item => {
+                let safeName = item.name.replace(/'/g, "\\'");
+                let imgTag = item.image ? `<img src="${item.image}" class="item-img" alt="صورة القطعة" onclick="openImageModal('${item.image}', '${safeName}')">` : `<div class="item-img" style="display:flex; align-items:center; justify-content:center; font-size:1.5rem;">📦</div>`;
+                html += `
+                    <div class="item-card">
+                        ${imgTag}
+                        <div class="item-details">
+                            <h4>${item.name}</h4>
+                            <p>القسم: <b>${item.category}</b> | الجملة: <b>${item.price} د.ع</b></p>
+                            <p>الكمية المتاحة: <b>${item.qty}</b></p>
+                        </div>
+                        <div class="item-actions">
+                            <button class="qty-btn minus" onclick="openActionModal('${item.id}')">-</button>
+                            <span style="font-weight:700; min-width:24px; text-align:center;">${item.qty}</span>
+                            <button class="qty-btn plus" onclick="updateQtyDirect('${item.id}', 1)">+</button>
                         </div>
                     </div>
                 `;
-
-                // و: إسقاط رمز الشخص على الخريطة ومؤشر النبض والـ Tooltip
-                const nodeElement = document.createElement('div');
-                nodeElement.className = `node-element target-person status-${person.status}`;
-                nodeElement.style.left = `${person.x}px`;
-                nodeElement.style.top = `${person.y}px`;
-                
-                nodeElement.innerHTML = `
-                    <div class="node-pulse"></div>
-                    <div class="node-dot"><i class="fa-solid ${person.icon}"></i></div>
-                    <div class="node-tooltip">
-                        <strong>${person.name}</strong><br>
-                        الوظيفة: ${person.role}<br>
-                        الإحداثيات: (${Math.floor(person.x)}, ${Math.floor(person.y)})
-                    </div>
-                `;
-                mapContainer.appendChild(nodeElement);
             });
-
-            // تحديث درجات التوهج الحراري للأشخاص
-            heatmapInstance.setData({ max: 100, data: thermalPoints });
+            resultsContainer.innerHTML = html;
         }
 
-        // تشغيل الرصد وتحديث المواقع تلقائياً كل 3 ثوانٍ بشكل مستمر حت تلاحظ حركة الأشخاص ورسم المسار خلفهم
-        simulateMovement();
-        setInterval(simulateMovement, 3000);
+        async function openActionModal(id) {
+            let item = inventory.find(p => String(p.id) === String(id));
+            if (item) {
+                if (Number(item.qty) <= 0) { 
+                    await showCustomAlert("الكمية غير متاحة!"); 
+                    return; 
+                }
+                selectedItemId = String(id);
+                document.getElementById('modalItemName').textContent = item.name;
+                document.getElementById('actionModal').style.display = 'flex';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('actionModal').style.display = 'none';
+            selectedItemId = null;
+        }
+
+        function processAction(type) {
+            if (!selectedItemId) return;
+            let item = inventory.find(p => String(p.id) === String(selectedItemId));
+            if (!item) return;
+
+            item.qty = Number(item.qty) - 1;
+            if (type === 'sale') logItem(salesLog, item.name, 1, item.price);
+            else if (type === 'loss') logItem(lossLog, item.name, 1, item.price);
+            else if (type === 'defect') logItem(defectLog, item.name, 1, item.price);
+
+            syncToServer();
+            filterInventory();
+            closeModal();
+        }
+
+        function logItem(logArray, name, qty, price) {
+            let existing = logArray.find(entry => entry.name === name);
+            if (existing) {
+                existing.qty = Number(existing.qty) + qty;
+                existing.totalPrice = Number(existing.totalPrice || 0) + (qty * price);
+            } else {
+                logArray.push({ name: name, qty: qty, totalPrice: qty * price });
+            }
+        }
+
+        function updateQtyDirect(id, delta) {
+            let item = inventory.find(p => String(p.id) === String(id));
+            if (item) {
+                item.qty = Number(item.qty) + delta;
+                if (item.qty < 0) item.qty = 0;
+                syncToServer();
+                filterInventory();
+            }
+        }
+
+        async function confirmClearAll() {
+            let confirmed = await showCustomConfirm("هل أنت متأكد من مسح جميع السجلات والإحصائيات؟");
+            if (confirmed) {
+                salesLog = [];
+                lossLog = [];
+                defectLog = [];
+                syncToServer();
+                updateStats();
+                await showCustomAlert("تم مسح السجلات بنجاح!");
+            }
+        }
+
+        function updateStats() {
+            let totalQty = inventory.reduce((sum, item) => sum + Number(item.qty), 0);
+            let totalCapital = inventory.reduce((sum, item) => sum + (Number(item.price) * Number(item.qty)), 0);
+
+            document.getElementById('totalQtyStat').textContent = totalQty + ' قطعة';
+            document.getElementById('totalCapitalStat').textContent = totalCapital.toLocaleString() + ' د.ع';
+
+            let totalSalesCount = salesLog.reduce((sum, entry) => sum + Number(entry.qty), 0);
+            let totalSalesAmount = salesLog.reduce((sum, entry) => sum + Number(entry.totalPrice || 0), 0);
+            document.getElementById('totalSalesStat').textContent = totalSalesCount + ' قطعة';
+            document.getElementById('totalSalesAmount').textContent = 'المبلغ: ' + totalSalesAmount.toLocaleString() + ' د.ع';
+            document.getElementById('salesListContainer').innerHTML = renderLogList(salesLog);
+
+            let totalLossCount = lossLog.reduce((sum, entry) => sum + Number(entry.qty), 0);
+            let totalLossAmount = lossLog.reduce((sum, entry) => sum + Number(entry.totalPrice || 0), 0);
+            document.getElementById('totalLossStat').textContent = totalLossCount + ' قطعة';
+            document.getElementById('totalLossAmount').textContent = 'المبلغ: ' + totalLossAmount.toLocaleString() + ' د.ع';
+            document.getElementById('lossListContainer').innerHTML = renderLogList(lossLog);
+
+            let totalDefectCount = defectLog.reduce((sum, entry) => sum + Number(entry.qty), 0);
+            let totalDefectAmount = defectLog.reduce((sum, entry) => sum + Number(entry.totalPrice || 0), 0);
+            document.getElementById('totalDefectStat').textContent = totalDefectCount + ' قطعة';
+            document.getElementById('totalDefectAmount').textContent = 'المبلغ: ' + totalDefectAmount.toLocaleString() + ' د.ع';
+            document.getElementById('defectListContainer').innerHTML = renderLogList(defectLog);
+        }
+
+        function renderLogList(logArray) {
+            if (!logArray || logArray.length === 0) return 'لا توجد سجلات مسجلة';
+            return logArray.map(e => `• ${e.name} (${e.qty}) - ${(Number(e.totalPrice) || 0).toLocaleString()} د.ع`).join('<br>');
+        }
     </script>
 </body>
 </html>
